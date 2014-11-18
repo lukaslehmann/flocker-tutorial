@@ -1,0 +1,53 @@
+#!/bin/bash
+
+echo -e "\nBringing nodes up"
+vagrant up
+echo -e "We now have two nodes running, 'node1' and 'node2'"
+
+echo -e "\nPulling Docker Postgresqls"
+ssh -t root@172.16.255.250 docker pull postgres &
+ssh -t root@172.16.255.251 docker pull postgres &
+wait
+
+echo -e "\nSetting up initial postgresql deployment YML:"
+tail -n 50 postgres-deployment.yml postgres-application.yml
+
+echo -e "\nDeploying postgreql to node1:"
+flocker-deploy postgres-deployment.yml postgres-application.yml
+
+echo -e "\nSee what is running with docker on node1 using docke ps:"
+ssh root@172.16.255.250 docker ps
+
+echo -e "\nCreate database 'flockertest' on node1"
+psql postgres --host 172.16.255.250 --port 5432 --username postgres -c "
+CREATE DATABASE test;
+"
+
+echo -e "\nCreate a table on node1 and insert a value"
+psql flockertest --host 172.16.255.250 --port 5432 --username postgres -c "
+CREATE TABLE newtable (newcolumn text);
+INSERT INTO newtable (newcolumn) VALUES ('hi');
+"
+
+echo -e "\nSee the values in the new table on node1:"
+psql flockertest --host 172.16.255.250 --port 5432 --username postgres -c "
+SELECT * FROM newtable;
+"
+
+echo -e "\nSetup YAML configurations to move postgres to node2:"
+tail -n 50 postgres-deployment-moved.yml postgres-application.yml
+
+echo -e "\nredeploy moving postgresql to node2:"
+flocker-deploy postgres-deployment-moved.yml postgres-application.yml
+
+echo -e "\nSee what is running with docker on node2 using docker ps:"
+ssh root@172.16.255.251 docker ps
+
+echo -e "\nSee what is running with docker on node1 using docker ps:"
+ssh root@172.16.255.250 docker ps
+
+echo -e "\nselect from the table on node2:"
+psql flockertest --host 172.16.255.251 --port 5432 --username postgres -c "
+select * from newtable;
+"
+

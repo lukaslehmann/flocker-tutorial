@@ -1,0 +1,20 @@
+version: 1
+applications:
+  11111-asdlkfj-asldkf99:
+    image: postgres:9.4
+    environment:
+      password: secretpassword
+    ports:
+    - external: 30000
+      internal: 5432
+    volume:
+      mountpoint: /var/lib/postgresql/data
+  11111-asdlkfj-asldkf9911:
+    image: postgres
+    environment:
+      password: secretpassword
+    ports:
+    - external: 30001
+      internal: 5432
+    volume:
+      mountpoint: /var/lib/postgresql/data

@@ -1,0 +1,12 @@
+version: 1
+applications:
+  mysql-volume-example:
+    image: mysql
+    environment:
+      demovariable: demokey
+      demovariable2: demokey2
+    ports:
+    - external: 3333
+      internal: 3306
+    volume:
+      mountpoint: /test/test/test
